@@ -12,11 +12,39 @@ services:
     networks:
       - sailingLocNet
 
+  couchdb:
+    image: couchdb:latest
+    container_name: my-couchdb
+    ports:
+      - "5984:5984"
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=admin123
+    volumes:
+      - couch_data:/opt/couchdb/data
+    networks:
+      - sailingLocNet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5984/_up"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   init-replica:
     image: mongo:7
     depends_on:
       - mongo
-    entrypoint: ["sh", "-c", "sleep 5 && mongosh --host mongo:27017 --eval 'rs.initiate({_id:\"rs0\", members:[{_id:0, host:\"mongo:27017\"}]})'"]
+    volumes:
+      - ./init-replica.js:/scripts/init-replica.js
+    command: >
+      sh -c "
+        until mongosh --host mongo:27017 --quiet --eval 'db.adminCommand(\"ping\")'; do
+          echo 'Waiting for MongoDB to be ready...';
+          sleep 2;
+        done;
+        echo 'MongoDB is ready. Initializing replica set...';
+        mongosh --host mongo:27017 /scripts/init-replica.js;
+      "
     restart: on-failure
     networks:
       - sailingLocNet
@@ -25,13 +53,18 @@ services:
     build: .
     container_name: app
     depends_on:
-      - mongo
-      - init-replica
+      mongo:
+        condition: service_started
+      couchdb:
+        condition: service_healthy
+      init-replica:
+        condition: service_completed_successfully
     ports:
       - "3000:3000"
     environment:
       - DATABASE_URL=mongodb://mongo:27017/sailingLoc?replicaSet=rs0
-    command: sh -c "node wait-for-mongo.js && npx prisma db push && node index.js"
+      - COUCHDB_URL=http://admin:admin123@couchdb:5984
+    command: sh -c "npx prisma db push && node index.js"
     volumes:
       - .:/app
     networks:
@@ -39,6 +72,7 @@ services:
 
 volumes:
   mongo_data:
+  couch_data:
 
 networks:
   sailingLocNet:

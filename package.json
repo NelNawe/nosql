@@ -6,14 +6,15 @@
   "dependencies": {
     "@prisma/client": "^6.10.1",
     "express": "^4.18.2",
-    "mongodb": "^6.17.0"
+    "mongodb": "^6.17.0",
+    "nano": "^10.1.4"
   },
   "devDependencies": {
     "prisma": "^6.10.1"
   },
   "name": "boat",
   "version": "1.0.0",
-  "description": "Bienvenue dans **SailingLoc**, une application Node.js/Express utilisant MongoDB et Prisma.  \r Le projet simule un système de gestion de flotte de bateaux pour une plateforme de location.",
+  "description": "Bienvenue dans **SailingLoc**, une application Node.js/Express utilisant MongoDB avec Prisma ET CouchDB. Le projet simule un système de gestion de flotte de bateaux pour une plateforme de location.",
   "main": "index.js",
   "author": "",
   "license": "ISC"

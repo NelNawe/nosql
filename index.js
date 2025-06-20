@@ -1,10 +1,12 @@
 import express from "express";
 import { PrismaClient } from "@prisma/client";
+import { boatsDbPromise } from "./couchdb.js";
 
 console.log("🚀 App démarrée");
 
 const app = express();
 const prisma = new PrismaClient();
+let boatsDb;
 
 app.use(express.json());
 
@@ -18,17 +20,32 @@ app.get("/", async (req, res) => {
   }
 });
 
-
 app.post("/boats", async (req, res) => {
   const { name, type, year } = req.body;
   try {
-    const boat = await prisma.Boat.create({
+    await prisma.Boat.create({
       data: { name, type, year: parseInt(year) },
     });
-    res.status(201).json(boat);
+
+    const response = await boatsDb.insert({
+      name,
+      type,
+      year: parseInt(year),
+    });
+
+    res.status(201).json({
+      message: "Bateau créé avec succès dans les deux bases de données",
+      couchDbId: response.id,
+      couchDbRev: response.rev,
+    });
   } catch (error) {
     console.error("Erreur :", error);
-    res.status(500).json({ error: "Erreur lors de la création du bateau" });
+    res
+      .status(500)
+      .json({
+        error: "Erreur lors de la création du bateau",
+        details: error,
+      });
   }
 });
 
@@ -93,7 +110,16 @@ app.delete("/boats/:id", async (req, res) => {
   }
 });
 
+async function start() {
+  try {
+    boatsDb = await boatsDbPromise;
+    app.listen(3000, () => {
+      console.log("Serveur démarré sur http://localhost:3000");
+    });
+  } catch (error) {
+    console.error("Impossible de démarrer le serveur:", error);
+    process.exit(1);
+  }
+}
 
-app.listen(3000, () => {
-  console.log("Serveur démarré sur http://localhost:3000");
-});
+start();
