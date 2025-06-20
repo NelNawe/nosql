@@ -42,6 +42,57 @@ app.get("/boats", async (req, res) => {
   }
 });
 
+app.put("/boats/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, type, year } = req.body;
+  try {
+    const existingBoat = await prisma.boat.findUnique({
+      where: { id: id },
+    });
+    if(!existingBoat) {
+      return res.status(404).json({ error: "Bateau non trouvé"});
+    }
+    if(!name || !type || !year){
+      return res.status(400).json({ error: "Les champs 'name', 'type' et 'year' sont requis"});
+    }
+    const updatedBoat = await prisma.boat.update({
+      where: { id: id },
+      data: {
+        name,
+        type,
+        year: Number(year),
+      },
+    });
+    res.json(updatedBoat);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/boats/:id", async (req, res) => {
+  const { id } = req.params; 
+
+  try {
+    const existingBoat = await prisma.boat.findUnique({
+      where: { id },
+    });
+
+    if (!existingBoat) {
+      return res.status(404).json({ error: "Bateau non trouvé" });
+    }
+
+    await prisma.boat.delete({
+      where: { id },
+    });
+
+    res.json({ message: "Bateau supprimé avec succès" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message }); // ✅ parenthèse corrigée
+  }
+});
+
 
 app.listen(3000, () => {
   console.log("Serveur démarré sur http://localhost:3000");

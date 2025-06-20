@@ -10,5 +10,11 @@
   },
   "devDependencies": {
     "prisma": "^6.10.1"
-  }
+  },
+  "name": "boat",
+  "version": "1.0.0",
+  "description": "Bienvenue dans **SailingLoc**, une application Node.js/Express utilisant MongoDB et Prisma.  \r Le projet simule un système de gestion de flotte de bateaux pour une plateforme de location.",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC"
 }
